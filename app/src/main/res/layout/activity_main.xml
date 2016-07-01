@@ -10,11 +10,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:inputType="textPersonName"
-        android:text="token"
         android:ems="10"
         android:id="@+id/token_text"
         android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:hint="token" />
 
     <TextView
         android:text="TextView"
@@ -33,15 +33,6 @@
         android:layout_alignParentStart="true" />
 
     <Button
-        android:text="Create It"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/token_button_id"
-        android:layout_alignParentStart="true"
-        android:id="@+id/create_button"
-        android:layout_alignEnd="@+id/token_button_id" />
-
-    <Button
         android:text="Scan code"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -58,4 +49,22 @@
         android:layout_alignParentStart="true"
         android:id="@+id/view_code_button"
         android:layout_alignEnd="@+id/scan_code_button" />
+
+    <Button
+        android:text="Logout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/logout_button"
+        android:layout_below="@+id/token_button_id"
+        android:layout_alignEnd="@+id/token_button_id"
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:text="Create It"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/create_button"
+        android:layout_below="@+id/logout_button"
+        android:layout_alignParentStart="true"
+        android:layout_alignEnd="@+id/logout_button" />
 </RelativeLayout>

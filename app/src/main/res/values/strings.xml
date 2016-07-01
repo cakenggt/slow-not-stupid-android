@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Slow, not stupid</string>
+    <string name="shared_preferences_file_key">com.aleclownes.slownotstupid.sharedPreferences</string>
+    <string name="token_key">com.aleclownes.slownotstupid.token</string>
 </resources>

@@ -16,23 +16,17 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
 
     private final int MY_PERMISSIONS_FINE_LOCATION = 1;
-    private RequestQueue queue;
-    private String url ="http://10.0.2.2:3000/";
+    private API api;
     private TextView mTextView;
     private EditText mTokenText;
 
@@ -40,22 +34,38 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        queue = Volley.newRequestQueue(this);
+        api = new API(this);
         mTextView = (TextView) findViewById(R.id.text_view);
         mTokenText = (EditText) findViewById(R.id.token_text);
+        String token = api.getToken();
+        if (token != null){
+            mTokenText.setText(token);
+        }
         final Button setTokenButton = (Button) findViewById(R.id.token_button_id);
         setTokenButton.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
                 LocationManager locationManager = (LocationManager)
                         getSystemService(Context.LOCATION_SERVICE);
+                api.saveToken(mTokenText.getText().toString());
                 if (ContextCompat.checkSelfPermission(v.getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) ==
                     PackageManager.PERMISSION_GRANTED){
                     Location loc = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                     if (loc == null){
-                        sendLocation(0, 0);
+                        try {
+                            api.sendLocation(0, 0,
+                                    new ResponseListener(mTextView), new ErrorListener(mTextView));
+                        } catch (API.TokenMissingException e) {
+                            e.printStackTrace();
+                        }
                     }
                     else{
-                        sendLocation(loc.getLatitude(), loc.getLongitude());
+                        try {
+                            api.sendLocation(loc.getLatitude(),
+                                    loc.getLongitude(), new ResponseListener(mTextView),
+                                    new ErrorListener(mTextView));
+                        } catch (API.TokenMissingException e) {
+                            e.printStackTrace();
+                        }
                     }
 
                 }
@@ -70,7 +80,12 @@ public class MainActivity extends AppCompatActivity {
         createItButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                createIt();
+                try {
+                    api.createIt(new ResponseListener(mTextView),
+                            new ErrorListener(mTextView));
+                } catch (API.TokenMissingException e) {
+                    e.printStackTrace();
+                }
             }
         });
         final Button scanCodeButton = (Button) findViewById(R.id.scan_code_button);
@@ -86,7 +101,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 IntentIntegrator integrator = new IntentIntegrator(MainActivity.this);
-                integrator.shareText(mTextView.getText());
+                integrator.shareText(mTokenText.getText().toString());
+            }
+        });
+        final Button logoutButton = (Button) findViewById(R.id.logout_button);
+        logoutButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                api.removeToken();
+                mTokenText.setText("");
             }
         });
     }
@@ -106,7 +129,13 @@ public class MainActivity extends AppCompatActivity {
                         LocationManager locationManager = (LocationManager)
                                 getSystemService(Context.LOCATION_SERVICE);
                         Location loc = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                        sendLocation(loc.getLatitude(), loc.getLongitude());
+                        try {
+                            api.sendLocation(loc.getLatitude(),
+                                    loc.getLongitude(), new ResponseListener(mTextView),
+                                    new ErrorListener(mTextView));
+                        } catch (API.TokenMissingException e) {
+                            e.printStackTrace();
+                        }
                     }
 
                 } else {
@@ -124,94 +153,46 @@ public class MainActivity extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
         if (scanResult != null) {
-            sendInfect(scanResult.getContents());
+            try {
+                api.sendInfect(scanResult.getContents(),
+                        new ResponseListener(mTextView), new ErrorListener(mTextView));
+            } catch (API.TokenMissingException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    private void sendLocation(double latitude, double longitude){
-        final String endpoint = "location/";
-        String totalUrl = url + endpoint;
-        JSONObject jsonRequest = new JSONObject();
-        try {
-            jsonRequest.put("token", mTokenText.getText());
-            jsonRequest.put("lat", latitude);
-            jsonRequest.put("lon", longitude);
-        } catch (JSONException e) {
-            e.printStackTrace();
+    class ResponseListener implements Response.Listener<JSONObject>{
+
+        private TextView textView;
+
+        public ResponseListener(TextView textView){
+            this.textView = textView;
         }
-        JsonObjectRequest jsObjRequest = new JsonObjectRequest
-                (Request.Method.POST, totalUrl, jsonRequest, new Response.Listener<JSONObject>(){
 
-                    @Override
-                    public void onResponse(JSONObject response){
-                        mTextView.setText("Response: " + response.toString());
-                    }
+        @Override
+        public void onResponse(JSONObject response){
+            if (textView != null) {
+                textView.setText("Response: " + response.toString());
+            }
+        }
 
-                }, new Response.ErrorListener(){
-
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        mTextView.setText("Error: " + error.toString());
-                    }
-
-                });
-        queue.add(jsObjRequest);
     }
 
-    private void createIt(){
-        final String endpoint = "create/";
-        String totalUrl = url + endpoint;
-        JSONObject jsonRequest = new JSONObject();
-        try {
-            jsonRequest.put("token", mTokenText.getText());
-        } catch (JSONException e) {
-            e.printStackTrace();
+    class ErrorListener implements Response.ErrorListener{
+
+        private TextView textView;
+
+        public ErrorListener(TextView textView){
+            this.textView = textView;
         }
-        JsonObjectRequest jsObjRequest = new JsonObjectRequest
-                (Request.Method.POST, totalUrl, jsonRequest, new Response.Listener<JSONObject>(){
 
-                    @Override
-                    public void onResponse(JSONObject response){
-                        mTextView.setText("Response: " + response.toString());
-                    }
-
-                }, new Response.ErrorListener(){
-
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        mTextView.setText("Error: " + error.toString());
-                    }
-
-                });
-        queue.add(jsObjRequest);
-    }
-
-    private void sendInfect(String code){
-        final String endpoint = "infect/";
-        String totalUrl = url + endpoint;
-        JSONObject jsonRequest = new JSONObject();
-        try {
-            jsonRequest.put("token", mTokenText.getText());
-            jsonRequest.put("id", code);
-        } catch (JSONException e) {
-            e.printStackTrace();
+        @Override
+        public void onErrorResponse(VolleyError error) {
+            if (textView != null) {
+                textView.setText("Error: " + error.toString());
+            }
         }
-        JsonObjectRequest jsObjRequest = new JsonObjectRequest
-                (Request.Method.POST, totalUrl, jsonRequest, new Response.Listener<JSONObject>(){
 
-                    @Override
-                    public void onResponse(JSONObject response){
-                        mTextView.setText("Response: " + response.toString());
-                    }
-
-                }, new Response.ErrorListener(){
-
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        mTextView.setText("Error: " + error.toString());
-                    }
-
-                });
-        queue.add(jsObjRequest);
     }
 }
