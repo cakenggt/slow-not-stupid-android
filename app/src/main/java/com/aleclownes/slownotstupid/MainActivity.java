@@ -112,6 +112,14 @@ public class MainActivity extends AppCompatActivity {
                 changeSignInView(false);
             }
         });
+        final Button scoresButton = (Button) findViewById(R.id.scores);
+        scoresButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                api.getScores(new ResponseListener(mTextView),
+                        new ErrorListener(mTextView));
+            }
+        });
     }
 
     @Override

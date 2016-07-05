@@ -55,6 +55,12 @@
             android:id="@+id/view_code_button"
             android:layout_alignEnd="@+id/scan_code_button" />
 
+        <Button
+            android:text="Get Scores"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/scores" />
+
         <TextView
             android:text="TextView"
             android:layout_width="match_parent"

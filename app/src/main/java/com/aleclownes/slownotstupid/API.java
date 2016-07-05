@@ -132,6 +132,15 @@ public class API {
         queue.add(jsObjRequest);
     }
 
+    public void getScores(Response.Listener<JSONObject> responseListener,
+                          Response.ErrorListener errorListener){
+        final String endpoint = "scores/";
+        String totalUrl = url + endpoint + "?token="+token;
+        JsonObjectRequest jsObjRequest = new JsonObjectRequest
+                (Request.Method.GET, totalUrl, null, responseListener, errorListener);
+        queue.add(jsObjRequest);
+    }
+
     public String getToken(){
         if (token == null){
             SharedPreferences sharedPref = context.getSharedPreferences(context.getString(R.string.shared_preferences_file_key),
