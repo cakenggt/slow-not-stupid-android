@@ -1,5 +1,7 @@
 package com.aleclownes.slownotstupid;
 
+import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -19,17 +21,13 @@ import com.android.volley.VolleyError;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 /**
  * Created by alownes on 7/5/2016.
  */
 
 public class LocationService extends Service {
     private static final String TAG = "LocationService";
-    private Timer mTimer;
-    private int NOTIFY_INTERVAL = 1000 * 60 * 5;//5 minutes
+    private int NOTIFY_INTERVAL = 1000*5;//1000 * 60 * 5;//5 minutes
     private API api;
     private int mId = 5;
 
@@ -40,39 +38,36 @@ public class LocationService extends Service {
     }
 
     public void onDestroy() {
-        Toast.makeText(this, "LocationService Stopped", Toast.LENGTH_LONG).show();
         Log.d(TAG, "onDestroy");
     }
 
     @Override
     public void onCreate(){
-        Toast.makeText(this, "LocationService Started", Toast.LENGTH_LONG).show();
-        mTimer = new Timer();
         api = new API(getApplicationContext());
-        mTimer.scheduleAtFixedRate(new LocationTimerTask(), 0, NOTIFY_INTERVAL);
+        Intent locationIntent = new Intent(getApplicationContext(), LocationService.class);
+        PendingIntent pi = PendingIntent.getService(getApplicationContext(), 0, locationIntent, 0);
+        AlarmManager am = (AlarmManager)getSystemService(Activity.ALARM_SERVICE);
+        am.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                0,
+                NOTIFY_INTERVAL, pi);
     }
 
-    class LocationTimerTask extends TimerTask{
-
-        @Override
-        public void run() {
-            try{
-                api.sendLocation(new LocationService.ResponseListener(),
-                        new LocationService.ErrorListener());
-            } catch (API.TokenMissingException e){
-                e.printStackTrace();
-            }
-
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startID) {
+        Log.v(TAG, "onStartCommand");
+        try{
+            api.sendLocation(new LocationService.ResponseListener(),
+                    new LocationService.ErrorListener());
+        } catch (API.TokenMissingException e){
+            e.printStackTrace();
         }
+        return START_STICKY;
     }
 
     class ResponseListener implements Response.Listener<JSONObject>{
 
         @Override
         public void onResponse(JSONObject response){
-            Toast.makeText(getApplicationContext(),
-                    "Success in sending location: "+response.toString(),
-                    Toast.LENGTH_LONG).show();
             try{
                 if (response.has("nearby") && !TextUtils.isEmpty(response.getString("nearby"))) {
                     NotificationCompat.Builder mBuilder =

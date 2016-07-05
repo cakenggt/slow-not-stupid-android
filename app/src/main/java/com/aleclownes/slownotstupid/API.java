@@ -9,6 +9,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -30,6 +31,7 @@ public class API {
     private final String url = BuildConfig.API_URL;
     private String token;
     private final int MY_PERMISSIONS_FINE_LOCATION = 1;
+    private final String TAG = "API";
 
     public API(Context context){
         this.context = context;
@@ -39,6 +41,7 @@ public class API {
 
     public void sendLocation(Response.Listener<JSONObject> responseListener,
                         Response.ErrorListener errorListener) throws TokenMissingException{
+        Log.v(TAG, "sendLocation");
         LocationManager locationManager = (LocationManager)
                 context.getSystemService(Context.LOCATION_SERVICE);
         if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) ==
