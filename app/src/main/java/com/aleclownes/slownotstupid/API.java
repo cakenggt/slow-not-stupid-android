@@ -1,8 +1,14 @@
 package com.aleclownes.slownotstupid;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -23,17 +29,51 @@ public class API {
     private Context context;
     private final String url = BuildConfig.API_URL;
     private String token;
+    private final int MY_PERMISSIONS_FINE_LOCATION = 1;
 
-    public API(Activity activity){
-        context = activity;
-        queue = Volley.newRequestQueue(activity);
+    public API(Context context){
+        this.context = context;
+        queue = Volley.newRequestQueue(context);
         token = getToken();
+    }
+
+    public void sendLocation(Response.Listener<JSONObject> responseListener,
+                        Response.ErrorListener errorListener) throws TokenMissingException{
+        LocationManager locationManager = (LocationManager)
+                context.getSystemService(Context.LOCATION_SERVICE);
+        if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED){
+            Location loc = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            if (loc == null){
+                try {
+                    sendLocation(0, 0,
+                            responseListener, errorListener);
+                } catch (API.TokenMissingException e) {
+                    e.printStackTrace();
+                }
+            }
+            else{
+                try {
+                    sendLocation(loc.getLatitude(),
+                            loc.getLongitude(), responseListener,
+                            errorListener);
+                } catch (API.TokenMissingException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }
+        else{
+            ActivityCompat.requestPermissions((Activity)context,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    MY_PERMISSIONS_FINE_LOCATION);
+        }
     }
 
     public void sendLocation(double latitude,
                              double longitude, Response.Listener<JSONObject> responseListener,
                              Response.ErrorListener errorListener) throws TokenMissingException{
-        if (token == null){
+        if (token == null) {
             throw new TokenMissingException();
         }
         final String endpoint = "location/";

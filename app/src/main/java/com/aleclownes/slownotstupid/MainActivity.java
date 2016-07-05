@@ -1,14 +1,11 @@
 package com.aleclownes.slownotstupid;
 
-import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -43,37 +40,16 @@ public class MainActivity extends AppCompatActivity {
         }
         final Button setTokenButton = (Button) findViewById(R.id.token_button_id);
         setTokenButton.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View v){
-                LocationManager locationManager = (LocationManager)
-                        getSystemService(Context.LOCATION_SERVICE);
+            public void onClick(View v) {
                 api.saveToken(mTokenText.getText().toString());
-                if (ContextCompat.checkSelfPermission(v.getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) ==
-                    PackageManager.PERMISSION_GRANTED){
-                    Location loc = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                    if (loc == null){
-                        try {
-                            api.sendLocation(0, 0,
-                                    new ResponseListener(mTextView), new ErrorListener(mTextView));
-                        } catch (API.TokenMissingException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    else{
-                        try {
-                            api.sendLocation(loc.getLatitude(),
-                                    loc.getLongitude(), new ResponseListener(mTextView),
-                                    new ErrorListener(mTextView));
-                        } catch (API.TokenMissingException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
+                try {
+                    api.sendLocation(new ResponseListener(mTextView),
+                            new ErrorListener(mTextView));
+                } catch (API.TokenMissingException e) {
+                    e.printStackTrace();
                 }
-                else{
-                    ActivityCompat.requestPermissions((Activity)v.getContext(),
-                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                            MY_PERMISSIONS_FINE_LOCATION);
-                }
+                Intent locationIntent = new Intent(MainActivity.this, LocationService.class);
+                startService(locationIntent);
             }
         });
         final Button createItButton = (Button) findViewById(R.id.create_button);
