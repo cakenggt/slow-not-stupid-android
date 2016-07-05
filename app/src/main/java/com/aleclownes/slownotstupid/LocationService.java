@@ -27,7 +27,7 @@ import org.json.JSONObject;
 
 public class LocationService extends Service {
     private static final String TAG = "LocationService";
-    private int NOTIFY_INTERVAL = 1000*5;//1000 * 60 * 5;//5 minutes
+    private int NOTIFY_INTERVAL = 1000 * 60 * 5;//5 minutes
     private API api;
     private int mId = 5;
 
