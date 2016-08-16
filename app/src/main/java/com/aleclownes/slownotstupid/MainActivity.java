@@ -100,15 +100,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 IntentIntegrator integrator = new IntentIntegrator(MainActivity.this);
-                integrator.shareText(api.getToken());
+                integrator.shareText(api.getId());
             }
         });
         final Button logoutButton = (Button) findViewById(R.id.logout_button);
         logoutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                api.removeToken();
-                api.saveToken(null);
+                api.removeCredentials();
                 changeSignInView(false);
             }
         });
@@ -169,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
                 // Signed in successfully, show authenticated UI.
                 changeSignInView(true);
                 GoogleSignInAccount acct = result.getSignInAccount();
-                api.saveToken(acct.getIdToken());
+                api.saveCredentials(acct);
                 try {
                     api.sendLocation(new ResponseListener(mTextView),
                             new ErrorListener(mTextView));
@@ -239,7 +238,8 @@ public class MainActivity extends AppCompatActivity {
             if (textView != null) {
                 textView.setText("Error: " + error.toString());
             }
-            api.removeToken();
+            api.removeCredentials();
+            changeSignInView(false);
         }
 
     }

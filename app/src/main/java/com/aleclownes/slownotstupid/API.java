@@ -16,6 +16,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -30,6 +31,7 @@ public class API {
     private Context context;
     private final String url = BuildConfig.API_URL;
     private String token;
+    private String id;
     private final int MY_PERMISSIONS_FINE_LOCATION = 1;
     private final String TAG = "API";
 
@@ -141,6 +143,28 @@ public class API {
         queue.add(jsObjRequest);
     }
 
+    public void saveCredentials(GoogleSignInAccount acct){
+        SharedPreferences sharedPref = context.getSharedPreferences(context.getString(R.string.shared_preferences_file_key),
+                Context.MODE_PRIVATE);
+        SharedPreferences.Editor edit = sharedPref.edit();
+        edit.putString(context.getString(R.string.token_key), acct.getIdToken());
+        edit.putString(context.getString(R.string.id_key), acct.getId());
+        edit.commit();
+        this.token = acct.getIdToken();
+        this.id = acct.getId();
+    }
+
+    public void removeCredentials(){
+        SharedPreferences sharedPref = context.getSharedPreferences(context.getString(R.string.shared_preferences_file_key),
+                Context.MODE_PRIVATE);
+        SharedPreferences.Editor edit = sharedPref.edit();
+        edit.remove(context.getString(R.string.token_key));
+        edit.remove(context.getString(R.string.id_key));
+        edit.commit();
+        this.token = null;
+        this.id = null;
+    }
+
     public String getToken(){
         if (token == null){
             SharedPreferences sharedPref = context.getSharedPreferences(context.getString(R.string.shared_preferences_file_key),
@@ -152,28 +176,21 @@ public class API {
         }
     }
 
-    public void saveToken(String token){
-        SharedPreferences sharedPref = context.getSharedPreferences(context.getString(R.string.shared_preferences_file_key),
-                Context.MODE_PRIVATE);
-        SharedPreferences.Editor edit = sharedPref.edit();
-        edit.putString(context.getString(R.string.token_key), token);
-        edit.commit();
-        this.token = token;
+    public String getId(){
+        if (id == null){
+            SharedPreferences sharedPref = context.getSharedPreferences(context.getString(R.string.shared_preferences_file_key),
+                    Context.MODE_PRIVATE);
+            return sharedPref.getString(context.getString(R.string.id_key), null);
+        }
+        else{
+            return id;
+        }
     }
 
     class TokenMissingException extends Exception{
         public TokenMissingException(){
             super();
         }
-    }
-
-    public void removeToken(){
-        SharedPreferences sharedPref = context.getSharedPreferences(context.getString(R.string.shared_preferences_file_key),
-                Context.MODE_PRIVATE);
-        SharedPreferences.Editor edit = sharedPref.edit();
-        edit.remove(context.getString(R.string.token_key));
-        edit.commit();
-        this.token = null;
     }
 
 }
